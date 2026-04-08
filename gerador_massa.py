@@ -147,3 +147,54 @@ def gerar_bmp_padrao(nome_arquivo, tamanho_alvo_aproximado):
             matriz[i, :] = [0, 0, 255]
     img = Image.fromarray(matriz)
     img.save(caminho, format='BMP')
+
+def executar_menu():
+    garantir_pasta()
+    print("\n--- CONFIGURAÇÃO DA MASSA DE TESTES ---")
+    print("1 - Pequenos (1KB, 10KB, 100KB, 1MB)")
+    print("2 - Médios (10MB, 100MB)")
+    print("3 - Grandes (500MB, 1GB)")
+    print("4 - Todos")
+    
+    op_tamanho = input("Escolha a escala de tamanho (1-4): ").strip()
+    
+    tamanhos = {}
+    if op_tamanho == "1":
+        tamanhos = {"1KB": 1024, "10KB": 10240, "100KB": 102400, "1MB": 1048576}
+    elif op_tamanho == "2":
+        tamanhos = {"10MB": 10485760, "100MB": 104857600}
+    elif op_tamanho == "3":
+        tamanhos = {"500MB": 524288000, "1GB": 1073741824}
+    elif op_tamanho == "4":
+        tamanhos = {"1KB": 1024, "10KB": 10240, "100KB": 102400, "1MB": 1048576, "10MB": 10485760, "100MB": 104857600, "500MB": 524288000, "1GB": 1073741824}
+    else:
+        print("Opção inválida.")
+        return
+
+    print("\n1 - Arquivos de Texto (.txt)")
+    print("2 - Arquivos CSV (.csv)")
+    print("3 - JSON e BMP (.json, .bmp)")
+    print("4 - Todos os tipos")
+    op_tipo = input("Escolha os tipos de arquivo (1-4): ").strip()
+
+    print("\n[+] Gerando arquivos, aguarde...")
+    for nome, bytes_alvo in tamanhos.items():
+        if op_tipo in ["1", "4"]:
+            gerar_txt_aleatorio(f"texto_aleatorio_{nome}.txt", bytes_alvo)
+            gerar_txt_repetitivo(f"texto_repetitivo_{nome}.txt", bytes_alvo)
+            gerar_txt_natural(f"texto_natural_{nome}.txt", bytes_alvo)
+            
+        if op_tipo in ["2", "4"]:
+            gerar_csv_repetitivo(f"csv_repetitivo_{nome}.csv", bytes_alvo)
+            gerar_csv_incremental(f"csv_incremental_{nome}.csv", bytes_alvo)
+            gerar_csv_categorico(f"csv_categorico_{nome}.csv", bytes_alvo)
+            gerar_csv_realista(f"csv_realista_{nome}.csv", bytes_alvo)
+            
+        if op_tipo in ["3", "4"]:
+            gerar_json_repetitivo(f"dados_aninhados_{nome}.json", bytes_alvo)
+            gerar_bmp_padrao(f"imagem_padrao_{nome}.bmp", bytes_alvo)
+
+    print("[+] Arquivos gerados com sucesso na pasta 'massa_de_teste'.")
+
+if __name__ == "__main__":
+    executar_menu()
