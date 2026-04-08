@@ -1,0 +1,23 @@
+# Ignorar arquivos gerados de dados e saídas
+outputs/*
+massa_de_teste/*
+
+
+# Exceções (Manter as pastas no repositório)
+!outputs/.gitkeep
+!massa_de_teste/.gitkeep
+
+# Python: Arquivos temporários e de cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ambientes Virtuais e Variáveis de Ambiente
+venv/
+env/
+.venv/
+.env
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
