@@ -65,17 +65,34 @@ def gerar_grafico_throughput(resultados, pasta_destino):
     if not os.path.exists(pasta_destino):
         os.makedirs(pasta_destino)
         
-    tamanhos = [res['tamanho_bytes'] / (1024*1024) for res in resultados]
-    throughputs = [res['throughput_MB_s'] for res in resultados]
-    
     plt.figure(figsize=(10, 6))
-    plt.plot(tamanhos, throughputs, marker='o', linestyle='-', color='b')
+    
+    dados_por_algoritmo = {}
+    for r in resultados:
+        alg = r.get('algoritmo', 'Desconhecido')
+        if alg not in dados_por_algoritmo:
+            dados_por_algoritmo[alg] = {'x': [], 'y': []}
+        
+        tam_mb = r['tamanho_bytes'] / (1024 * 1024)
+        dados_por_algoritmo[alg]['x'].append(tam_mb)
+        dados_por_algoritmo[alg]['y'].append(r['throughput_MB_s'])
+        
+    for alg, dados in dados_por_algoritmo.items():
+        pontos = sorted(zip(dados['x'], dados['y']))
+        x_ordenado = [p[0] for p in pontos]
+        y_ordenado = [p[1] for p in pontos]
+        
+        plt.plot(x_ordenado, y_ordenado, marker='o', linestyle='-', label=alg)
+        
     plt.title('Desempenho: Throughput vs Tamanho do Arquivo')
     plt.xlabel('Tamanho do Arquivo (MB)')
     plt.ylabel('Throughput (MB/s)')
+    plt.legend()
     plt.grid(True)
     
-    caminho_grafico = os.path.join(pasta_destino, 'throughput_vs_tamanho.png')
+    data_atual = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    caminho_grafico = os.path.join(pasta_destino, f'throughput_vs_tamanho_{data_atual}.png')
+    
     plt.savefig(caminho_grafico)
     plt.close()
     return caminho_grafico
