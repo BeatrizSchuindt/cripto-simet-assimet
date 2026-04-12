@@ -11,7 +11,7 @@ PASTAS = {
 }
 
 ALGORITMOS_TESTE = ["AES-128", "AES-256", "DES", "3DES"]
-ALGORITIMO_ASSIMETRICO = ["RSA-2048"]
+ALGORITIMO_ASSIMETRICO = ["RSA-1024", "RSA-2048", "RSA-4096"]
 MODOS_TESTE = ["ECB", "CBC", "CFB", "OFB", "CTR"]
 MODOS_RSA = ["ECB", "CBC", "CTR"] 
 
@@ -68,13 +68,17 @@ if __name__ == "__main__":
                     print(f"!! Saltando RSA para {arquivo} ({tamanho_mb:.2f}MB) - Muito lento para o teste.")
                     continue
                 
+                # Extrai o tamanho da chave da string (ex: "RSA-1024" vira 1024)
+                tamanho_bits = int(algoritmo.split('-')[1])
+                chave_rsa = assimetricos.gerar_chave(tamanho_bits)
+                
                 for modo in MODOS_RSA:
                     caminho_out = os.path.join(PASTAS['saida'], f"cifrado_{algoritmo}_{modo}_{arquivo}")
                     caminho_decifrado = os.path.join(PASTAS['saida'], f"decifrado_{algoritmo}_{modo}_{arquivo}")
                     print(f"Processando Assimétrico: {arquivo} | {algoritmo} | {modo}")
                     
-                    args_cifrar = (caminho_in, caminho_out, modo)
-                    args_decifrar = (caminho_out, caminho_decifrado, modo)
+                    args_cifrar = (caminho_in, caminho_out, modo, chave_rsa)
+                    args_decifrar = (caminho_out, caminho_decifrado, modo, chave_rsa)
                     
                     resultado = metricas.executar_testes_completos(
                         assimetricos.cifrar_arquivo_rsa, args_cifrar,
