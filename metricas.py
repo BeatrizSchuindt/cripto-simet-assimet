@@ -34,29 +34,43 @@ def calcular_throughput(tamanho_bytes, tempo_segundos):
     tamanho_mb = tamanho_bytes / (1024 * 1024)
     return tamanho_mb / tempo_segundos
 
-def executar_com_metricas(funcao_cripto, arquivo_entrada, arquivo_saida, *args):
+def executar_testes_completos(funcao_cifrar, args_cifrar, funcao_decifrar, args_decifrar, arquivo_entrada, arquivo_saida):
     if not os.path.exists(arquivo_entrada):
         raise FileNotFoundError(f"Arquivo não encontrado: {arquivo_entrada}")
 
     tamanho_bytes = os.path.getsize(arquivo_entrada)
-    tempos = []
-
+    
+    # Executa a Cifragem 10 vezes
+    tempos_cifrar = []
     for _ in range(10):
         inicio = time.time()
-        funcao_cripto(arquivo_entrada, arquivo_saida, *args)
+        funcao_cifrar(*args_cifrar)
         fim = time.time()
-        tempos.append(fim - inicio)
+        tempos_cifrar.append(fim - inicio)
+        
+    tempo_medio_cifrar = sum(tempos_cifrar) / len(tempos_cifrar)
+    throughput_medio_cifrar = calcular_throughput(tamanho_bytes, tempo_medio_cifrar)
 
-    tempo_medio = sum(tempos) / len(tempos)
-    throughput_medio = calcular_throughput(tamanho_bytes, tempo_medio)
+    # Executa a Decifragem 10 vezes
+    tempos_decifrar = []
+    for _ in range(10):
+        inicio = time.time()
+        funcao_decifrar(*args_decifrar)
+        fim = time.time()
+        tempos_decifrar.append(fim - inicio)
+        
+    tempo_medio_decifrar = sum(tempos_decifrar) / len(tempos_decifrar)
+    throughput_medio_decifrar = calcular_throughput(tamanho_bytes, tempo_medio_decifrar)
     
     entropia_resultado = calcular_entropia(arquivo_saida)
     padroes = detectar_padroes(entropia_resultado)
 
     return {
         "tamanho_bytes": tamanho_bytes,
-        "tempo_medio_s": round(tempo_medio, 4),
-        "throughput_MB_s": round(throughput_medio, 4),
+        "tempo_cifrar_s": round(tempo_medio_cifrar, 4),
+        "tempo_decifrar_s": round(tempo_medio_decifrar, 4),
+        "throughput_cifrar_MB_s": round(throughput_medio_cifrar, 4),
+        "throughput_decifrar_MB_s": round(throughput_medio_decifrar, 4),
         "entropia": round(entropia_resultado, 4),
         "padroes_detectados": padroes
     }
@@ -75,7 +89,8 @@ def gerar_grafico_throughput(resultados, pasta_destino):
         
         tam_mb = r['tamanho_bytes'] / (1024 * 1024)
         dados_por_algoritmo[alg]['x'].append(tam_mb)
-        dados_por_algoritmo[alg]['y'].append(r['throughput_MB_s'])
+        # Usando o throughput de cifragem para o gráfico
+        dados_por_algoritmo[alg]['y'].append(r['throughput_cifrar_MB_s'])
         
     for alg, dados in dados_por_algoritmo.items():
         pontos = sorted(zip(dados['x'], dados['y']))
@@ -84,7 +99,7 @@ def gerar_grafico_throughput(resultados, pasta_destino):
         
         plt.plot(x_ordenado, y_ordenado, marker='o', linestyle='-', label=alg)
         
-    plt.title('Desempenho: Throughput vs Tamanho do Arquivo')
+    plt.title('Desempenho: Throughput vs Tamanho do Arquivo (Cifragem)')
     plt.xlabel('Tamanho do Arquivo (MB)')
     plt.ylabel('Throughput (MB/s)')
     plt.legend()
@@ -108,15 +123,15 @@ def gerar_relatorio_md(resultados, caminho_grafico, pasta_destino):
         f.write("# Relatório de Testes de Criptografia\n\n")
         f.write(f"**Data da Execução:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n")
         f.write("## 1. Tabela de Desempenho\n\n")
-        f.write("| Arquivo | Algoritmo | Modo | Tamanho (MB) | Tempo Médio (s) | Throughput (MB/s) | Entropia | Padrões Visíveis |\n")
-        f.write("|---------|-----------|------|--------------|-----------------|-------------------|----------|------------------|\n")
+        f.write("| Arquivo | Alg | Modo | Tam (MB) | T. Cifrar (s) | T. Decifrar (s) | Throughput Cif. (MB/s) | Throughput Dec. (MB/s) | Entropia | Padrões |\n")
+        f.write("|---------|-----|------|----------|---------------|-----------------|------------------------|------------------------|----------|---------|\n")
         
         for r in resultados:
             tam_mb = r['tamanho_bytes'] / (1024*1024)
             padrao = "⚠️ Sim" if r['padroes_detectados'] else "✅ Não"
-            algoritmo = r.get('algoritmo', 'N/A')
+            alg = r.get('algoritmo', 'N/A')
             modo = r.get('modo', 'N/A')
-            linha = f"| {r.get('arquivo', 'N/A')} | {algoritmo} | {modo} | {tam_mb:.4f} | {r['tempo_medio_s']:.4f} | {r['throughput_MB_s']:.4f} | {r['entropia']:.4f} | {padrao} |\n"
+            linha = f"| {r.get('arquivo', 'N/A')} | {alg} | {modo} | {tam_mb:.4f} | {r['tempo_cifrar_s']:.4f} | {r['tempo_decifrar_s']:.4f} | {r['throughput_cifrar_MB_s']:.4f} | {r['throughput_decifrar_MB_s']:.4f} | {r['entropia']:.4f} | {padrao} |\n"
             f.write(linha)
             
         f.write("\n## 2. Gráficos de Análise\n\n")
