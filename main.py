@@ -68,7 +68,6 @@ if __name__ == "__main__":
                     print(f"!! Saltando RSA para {arquivo} ({tamanho_mb:.2f}MB) - Muito lento para o teste.")
                     continue
                 
-                # Extrai o tamanho da chave da string (ex: "RSA-1024" vira 1024)
                 tamanho_bits = int(algoritmo.split('-')[1])
                 chave_rsa = assimetricos.gerar_chave(tamanho_bits)
                 
@@ -90,6 +89,7 @@ if __name__ == "__main__":
             
         # Gerar os entregáveis finais
         if resultados_gerais:
-            grafico = metricas.gerar_grafico_throughput(resultados_gerais, PASTAS['graficos'])
-            metricas.gerar_relatorio_md(resultados_gerais, grafico, PASTAS['md'])
+            grafico_tp = metricas.gerar_grafico_throughput(resultados_gerais, PASTAS['graficos'])
+            grafico_ent = metricas.gerar_grafico_entropia(resultados_gerais, PASTAS['graficos']) 
+            metricas.gerar_relatorio_md(resultados_gerais, grafico_tp, PASTAS['md'], grafico_ent)
             print("\n[+] Testes finalizados! Relatórios e gráficos gerados na pasta 'relatorios/'.")

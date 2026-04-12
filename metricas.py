@@ -112,7 +112,59 @@ def gerar_grafico_throughput(resultados, pasta_destino):
     plt.close()
     return caminho_grafico
 
-def gerar_relatorio_md(resultados, caminho_grafico, pasta_destino):
+def gerar_grafico_entropia(resultados, pasta_destino):
+    if not os.path.exists(pasta_destino):
+        os.makedirs(pasta_destino)
+        
+    plt.figure(figsize=(10, 6))
+    
+    dados_por_algoritmo = {}
+    for r in resultados:
+        alg = r.get('algoritmo', 'Desconhecido')
+        modo = r.get('modo', 'Desconhecido')
+        entropia = r['entropia']
+        
+        if alg not in dados_por_algoritmo:
+            dados_por_algoritmo[alg] = {}
+            
+        if modo not in dados_por_algoritmo[alg]:
+            dados_por_algoritmo[alg][modo] = []
+            
+        dados_por_algoritmo[alg][modo].append(entropia)
+        
+    modos_ordenados = ["ECB", "CBC", "CFB", "OFB", "CTR"]
+    
+    for alg, modos_dados in dados_por_algoritmo.items():
+        x_vals = []
+        y_vals = []
+        for modo in modos_ordenados:
+            if modo in modos_dados:
+                # Calcula a média da entropia para este modo e algoritmo
+                avg_entropia = sum(modos_dados[modo]) / len(modos_dados[modo])
+                x_vals.append(modo)
+                y_vals.append(avg_entropia)
+                
+        if x_vals:
+            plt.plot(x_vals, y_vals, marker='s', linestyle='-', label=alg)
+            
+    plt.title('Segurança: Entropia vs Modo de Operação')
+    plt.xlabel('Modo de Operação')
+    plt.ylabel('Entropia Média (Shannon)')
+    
+    plt.axhline(y=7.0, color='r', linestyle='--', label='Limiar de Padrões (< 7.0)')
+    
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, axis='y')
+    plt.tight_layout()
+    
+    data_atual = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    caminho_grafico = os.path.join(pasta_destino, f'entropia_vs_modo_{data_atual}.png')
+    
+    plt.savefig(caminho_grafico)
+    plt.close()
+    return caminho_grafico
+
+def gerar_relatorio_md(resultados, caminho_grafico_throughput, pasta_destino, caminho_grafico_entropia=None):
     if not os.path.exists(pasta_destino):
         os.makedirs(pasta_destino)
         
@@ -135,7 +187,14 @@ def gerar_relatorio_md(resultados, caminho_grafico, pasta_destino):
             f.write(linha)
             
         f.write("\n## 2. Gráficos de Análise\n\n")
-        nome_grafico = os.path.basename(caminho_grafico)
-        f.write(f"![Gráfico de Throughput](../graficos/{nome_grafico})\n")
+        
+        nome_grafico_tp = os.path.basename(caminho_grafico_throughput)
+        f.write(f"### Throughput vs Tamanho\n")
+        f.write(f"![Gráfico de Throughput](../graficos/{nome_grafico_tp})\n\n")
+        
+        if caminho_grafico_entropia:
+            nome_grafico_ent = os.path.basename(caminho_grafico_entropia)
+            f.write(f"### Entropia vs Modo de Operação\n")
+            f.write(f"![Gráfico de Entropia](../graficos/{nome_grafico_ent})\n")
         
     return caminho_md
