@@ -135,6 +135,22 @@ def gerar_json_repetitivo(nome_arquivo, tamanho_alvo):
             bytes_escritos += escrever
         f.write(b"]")
 
+def gerar_xml_repetitivo(nome_arquivo, tamanho_alvo):
+    caminho = os.path.join(PASTA_SAIDA, nome_arquivo)
+    linha_xml = "  <registro>\n    <usuario id=\"1001\">\n      <nome>Usuario_Teste</nome>\n      <permissoes>leitura, escrita</permissoes>\n      <metadados ativo=\"true\" regiao=\"BR-MT\"/>\n    </usuario>\n  </registro>\n"
+    linha_bytes = linha_xml.encode('utf-8')
+    bytes_escritos = 0
+    with open(caminho, 'wb') as f:
+        cabecalho = b"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<dados>\n"
+        f.write(cabecalho)
+        bytes_escritos += len(cabecalho)
+        while bytes_escritos < tamanho_alvo - 9:
+            escrever = min(TAMANHO_CHUNK, tamanho_alvo - bytes_escritos - 9)
+            multiplicador = escrever // len(linha_bytes) + 1
+            f.write((linha_bytes * multiplicador)[:escrever])
+            bytes_escritos += escrever
+        f.write(b"</dados>\n")
+
 def gerar_bmp_padrao(nome_arquivo, tamanho_alvo_aproximado):
     caminho = os.path.join(PASTA_SAIDA, nome_arquivo)
     pixels_totais = tamanho_alvo_aproximado // 3
@@ -151,31 +167,56 @@ def gerar_bmp_padrao(nome_arquivo, tamanho_alvo_aproximado):
 def executar_menu():
     garantir_pasta()
     print("\n--- CONFIGURAÇÃO DA MASSA DE TESTES ---")
-    print("1 - Pequenos (1KB, 10KB, 100KB, 1MB)")
-    print("2 - Médios (10MB, 100MB)")
-    print("3 - Grandes (500MB, 1GB)")
-    print("4 - Todos")
+    print("Escolha o tamanho dos arquivos a gerar:")
+    print("[1] 1KB")
+    print("[2] 10KB")
+    print("[3] 100KB")
+    print("[4] 1MB")
+    print("[5] 10MB")
+    print("[6] 100MB")
+    print("[7] 500MB")
+    print("[8] 1GB")
+    print("--- Grupos ---")
+    print("[p] Pequenos (1KB a 1MB)")
+    print("[m] Médios (10MB e 100MB)")
+    print("[g] Grandes (500MB e 1GB)")
+    print("[t] Todos os tamanhos")
     
-    op_tamanho = input("Escolha a escala de tamanho (1-4): ").strip()
+    op_tamanho = input("Opção: ").strip().lower()
+    
+    tamanhos_disp = {
+        "1KB": 1024, "10KB": 10240, "100KB": 102400, "1MB": 1048576,
+        "10MB": 10485760, "100MB": 104857600, 
+        "500MB": 524288000, "1GB": 1073741824
+    }
     
     tamanhos = {}
-    if op_tamanho == "1":
-        tamanhos = {"1KB": 1024, "10KB": 10240, "100KB": 102400, "1MB": 1048576}
-    elif op_tamanho == "2":
-        tamanhos = {"10MB": 10485760, "100MB": 104857600}
-    elif op_tamanho == "3":
-        tamanhos = {"500MB": 524288000, "1GB": 1073741824}
-    elif op_tamanho == "4":
-        tamanhos = {"1KB": 1024, "10KB": 10240, "100KB": 102400, "1MB": 1048576, "10MB": 10485760, "100MB": 104857600, "500MB": 524288000, "1GB": 1073741824}
+    if op_tamanho == '1': tamanhos = {"1KB": tamanhos_disp["1KB"]}
+    elif op_tamanho == '2': tamanhos = {"10KB": tamanhos_disp["10KB"]}
+    elif op_tamanho == '3': tamanhos = {"100KB": tamanhos_disp["100KB"]}
+    elif op_tamanho == '4': tamanhos = {"1MB": tamanhos_disp["1MB"]}
+    elif op_tamanho == '5': tamanhos = {"10MB": tamanhos_disp["10MB"]}
+    elif op_tamanho == '6': tamanhos = {"100MB": tamanhos_disp["100MB"]}
+    elif op_tamanho == '7': tamanhos = {"500MB": tamanhos_disp["500MB"]}
+    elif op_tamanho == '8': tamanhos = {"1GB": tamanhos_disp["1GB"]}
+    elif op_tamanho == 'p': 
+        tamanhos = {k: tamanhos_disp[k] for k in ["1KB", "10KB", "100KB", "1MB"]}
+    elif op_tamanho == 'm':
+        tamanhos = {k: tamanhos_disp[k] for k in ["10MB", "100MB"]}
+    elif op_tamanho == 'g':
+        tamanhos = {k: tamanhos_disp[k] for k in ["500MB", "1GB"]}
+    elif op_tamanho == 't':
+        tamanhos = tamanhos_disp
     else:
         print("Opção inválida.")
         return
 
-    print("\n1 - Arquivos de Texto (.txt)")
+    print("\nEscolha os tipos de arquivo:")
+    print("1 - Arquivos de Texto (.txt)")
     print("2 - Arquivos CSV (.csv)")
-    print("3 - JSON e BMP (.json, .bmp)")
+    print("3 - JSON, XML e BMP (.json, .xml, .bmp)")
     print("4 - Todos os tipos")
-    op_tipo = input("Escolha os tipos de arquivo (1-4): ").strip()
+    op_tipo = input("Opção (1-4): ").strip()
 
     print("\n[+] Gerando arquivos, aguarde...")
     for nome, bytes_alvo in tamanhos.items():
@@ -192,6 +233,7 @@ def executar_menu():
             
         if op_tipo in ["3", "4"]:
             gerar_json_repetitivo(f"dados_aninhados_{nome}.json", bytes_alvo)
+            gerar_xml_repetitivo(f"dados_aninhados_{nome}.xml", bytes_alvo)
             gerar_bmp_padrao(f"imagem_padrao_{nome}.bmp", bytes_alvo)
 
     print("[+] Arquivos gerados com sucesso na pasta 'massa_de_teste'.")
