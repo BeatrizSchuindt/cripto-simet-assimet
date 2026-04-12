@@ -1,6 +1,7 @@
 import os
 import gerador_massa
 import metricas
+import gerar_matriz_imagens
 from algoritmos import simetricos, assimetricos 
 
 PASTAS = {
@@ -92,4 +93,7 @@ if __name__ == "__main__":
             grafico_tp = metricas.gerar_grafico_throughput(resultados_gerais, PASTAS['graficos'])
             grafico_ent = metricas.gerar_grafico_entropia(resultados_gerais, PASTAS['graficos']) 
             metricas.gerar_relatorio_md(resultados_gerais, grafico_tp, PASTAS['md'], grafico_ent)
+            
+            gerar_matriz_imagens.gerar_matrizes(PASTAS['entrada'], PASTAS['saida'], PASTAS['graficos'])
+            
             print("\n[+] Testes finalizados! Relatórios e gráficos gerados na pasta 'relatorios/'.")
